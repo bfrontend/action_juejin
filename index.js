@@ -34,16 +34,18 @@ const compose = function (handles) {
 // 发送邮件
 function doSendMail(preResult) {
   console.log(6, preResult);
-  // return sendMail({
-  //   from: '掘金',
-  //   to,
-  //   subject: '定时任务',
-  //   html: `
-  //     <h1 style="text-align: center">自动签到通知</h1>
-  //     <p style="text-indent: 2em">执行结果：${msg}</p>
-  //     <p style="text-indent: 2em">当前积分：${score}</p><br/>
-  //   `
-  // }).catch(console.error);
+  const { doDrawResult } = preResult;
+  const msg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
+  return sendMail({
+    from: '掘金',
+    to,
+    subject: '掘金定时签到',
+    html: `
+      <h1 style="text-align: center">自动签到通知</h1>
+      <p style="text-indent: 2em">执行结果：${msg}</p>
+      <p style="text-indent: 2em">当前积分：${preResult.score}</p><br/>
+    `
+  }).catch(console.error);
 }
 
 // 检查今天是否已签到
@@ -65,11 +67,11 @@ function isCheckIn() {
 function doCheckIn(isCheckInResult) {
   console.log(2, isCheckInResult);
   const doCheckInResult = {
-    status: true,
+    status: isCheckInResult.status,
     point: 0,
-    errorMsg: ''
+    errorMsg: isCheckInResult.errorMsg
   }
-  if (!isCheckInResult.isCheckInStatus) return Promise.resolve({isCheckInResult, doCheckInResult});
+  if (!isCheckInResult.status) return Promise.resolve({isCheckInResult, doCheckInResult});
   return fetch(CHECKIN_LAUNCH, {
     headers,
     method: 'POST',
@@ -118,8 +120,8 @@ function queryDrawChance(preResult) {
 function doDraw(preResult) {
   console.log(4, preResult);
   const doDrawResult = {
-    status: true,
-    errorMsg: ''
+    status: preResult.drawChanceResult.status,
+    errorMsg: preResult.drawChanceResult.errorMsg
   }
   if (!preResult.drawChanceResult.status) return Promise.resolve({...preResult, doDrawResult});
   return fetch(DRAW_LAUNCH, {
