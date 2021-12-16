@@ -18,7 +18,26 @@ const headers = {
   cookie
 };
 
-// 抽奖
+const DRAW_CHANCE = 'https://api.juejin.cn/growth_api/v1/lottery_config/get' // 查询今日是否有免费抽奖机会
+const DRAW_LAUNCH = 'https://api.juejin.cn/growth_api/v1/lottery/draw' // 执行免费抽奖
+const QUERY_IS_CHECKIN = 'https://api.juejin.cn/growth_api/v1/get_today_status' // 查询今日是否已经签到
+const CHECKIN_LAUNCH = 'https://api.juejin.cn/growth_api/v1/check_in' // 执行签到
+const QUERY_CURRENT_POINT = 'https://api.juejin.cn/growth_api/v1/get_cur_point' // 查询当前积分
+
+// compose 组合函数
+const compose = function (handles) {
+  return handles.reduceRight((prev, next) => {
+    return prev.then(next)
+  }, Promise.resolve())
+}
+
+// 抽奖机会查询
+const drawChance = fetch('https://api.juejin.cn/growth_api/v1/lottery_config/get', {
+  headers,
+  method: 'GET',
+  credentials: 'include'
+}).then((res) => res.json())
+
 const drawFn = async () => {
   // 查询今日是否有免费抽奖机会
   const today = await fetch('https://api.juejin.cn/growth_api/v1/lottery_config/get', {
