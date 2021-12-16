@@ -53,8 +53,6 @@ function isCheckIn() {
     method: 'GET',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
-    if (res.err_no !== 0) return Promise.reject('签到失败！');
-    if (res.data) return Promise.reject('今日已经签到！');
     const errorMsg = res.err_no !== 0 ? '签到失败！' : res.data ? '今日已经签到！' : ''
     return {
       status: !errorMsg,
