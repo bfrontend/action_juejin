@@ -2,7 +2,7 @@ name: JueJin_Helper
 
 on:
   schedule:
-    - cron: "50 23 * * *" # 该时间为UTC时间，比北京时间晚8个小时，每天早上7点半自动执行
+    - cron: "0 23 * * *" # 该时间为UTC时间，比北京时间晚8个小时，每天早上7点自动执行
 
   workflow_dispatch:
 
@@ -15,7 +15,6 @@ jobs:
         with:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
-          ref: main
       - name: Run Project
         env:
           COOKIE: ${{ secrets.COOKIE }}
