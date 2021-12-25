@@ -38,7 +38,7 @@ const compose = function (handles) {
 function doSendMail(preResult) {
   const { doDrawResult, dipLuckyResult } = preResult;
   const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
-  const dipLuckMsg = dipLuckyResult.err_no !== 0 ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
+  const dipLuckMsg = dipLuckyResult.data.has_dip ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
   const html = `
     <h1 style="text-align: center">签到 + 粘福气</h1>
     <p style="text-indent: 2em">签到执行结果：${signMsg}</p>
