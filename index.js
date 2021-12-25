@@ -23,6 +23,9 @@ const DRAW_LAUNCH = 'https://api.juejin.cn/growth_api/v1/lottery/draw' // 执行
 const QUERY_IS_CHECKIN = 'https://api.juejin.cn/growth_api/v1/get_today_status' // 查询今日是否已经签到
 const CHECKIN_LAUNCH = 'https://api.juejin.cn/growth_api/v1/check_in' // 执行签到
 const QUERY_CURRENT_POINT = 'https://api.juejin.cn/growth_api/v1/get_cur_point' // 查询当前积分
+const QUERY_LUCK_LIST = 'https://api.juejin.cn/growth_api/v1/lottery_history/global_big' // 查询可粘福气列表
+const QUERY_MY_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/my_lucky' // 查询我的粘福气
+const DIP_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/dip_lucky' // 粘福气
 
 // compose 组合函数
 const compose = function (handles) {
@@ -33,12 +36,15 @@ const compose = function (handles) {
 
 // 发送邮件
 function doSendMail(preResult) {
-  const { doDrawResult } = preResult;
-  const msg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
+  const { doDrawResult, dipLuckyResult } = preResult;
+  const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
+  const dipLuckMsg = dipLuckyResult.err_no !== 0 ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
   const html = `
-    <h1 style="text-align: center">自动签到通知</h1>
-    <p style="text-indent: 2em">执行结果：${msg}</p>
+    <h1 style="text-align: center">签到 + 粘福气</h1>
+    <p style="text-indent: 2em">签到执行结果：${signMsg}</p>
+    <p style="text-indent: 2em">粘福气执行结果：${dipLuckMsg}</p>
     <p style="text-indent: 2em">当前积分：${preResult.score}</p>
+    <p style="text-indent: 2em">当前幸运值：${preResult.luckvalue}</p>
     ${ doDrawResult.errorObj ? '<p style="text-indent: 2em">' + JSON.stringify(doDrawResult.errorObj) + '</p>' : '' }
   `
   return sendMail({
@@ -138,9 +144,46 @@ function doDraw(preResult) {
   });
 }
 
+// 粘福气
+function dipLucky(preResult) {
+  return fetch(DIP_LUCK, {
+    headers,
+    method: 'POST',
+    credentials: 'include',
+    body: JSON.stringify({
+      lottery_history_id: preResult.luckList[0]
+    })
+  }).then((res) => res.json()).then(res => ({ ...preResult, dipLuckyResult: res }));
+}
+// 查询我的福气值
+function queryMylucky(preResult) {
+  return fetch(QUERY_MY_LUCK, {
+    headers,
+    method: 'POST',
+    credentials: 'include'
+  }).then((res) => res.json()).then(res => ({ ...preResult, luckvalue: res.data.total_value }))
+}
+// 查询可粘福气列表
+function queryLuckList(preResult) {
+  return fetch(QUERY_LUCK_LIST, {
+    headers,
+    method: 'POST',
+    credentials: 'include',
+    body: JSON.stringify({
+      page_no: 1,
+      page_size: 5
+    })
+  }).then((res) => res.json()).then(res => {
+    const lunks = res.data.lotteries.map(lottiem => lottiem.history_id)
+    return {...preResult, luckList: lunks}
+  })
+}
 
 compose([
   doSendMail,
+  queryMylucky,
+  dipLucky,
+  queryLuckList,
   queryCurrentPoint,
   doDraw,
   queryDrawChance,
