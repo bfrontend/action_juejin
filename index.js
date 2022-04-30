@@ -36,17 +36,25 @@ const compose = function (handles) {
 
 // 发送邮件
 function doSendMail(preResult) {
-  const { doDrawResult, dipLuckyResult } = preResult;
-  const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
-  const dipLuckMsg = dipLuckyResult.data.has_dip ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
-  const html = `
-    <h1 style="text-align: center">签到 + 粘福气</h1>
-    <p style="text-indent: 2em">签到执行结果：${signMsg}</p>
-    <p style="text-indent: 2em">粘福气执行结果：${dipLuckMsg}</p>
-    <p style="text-indent: 2em">当前积分：${preResult.score}</p>
-    <p style="text-indent: 2em">当前幸运值：${preResult.luckvalue}</p>
-    ${ doDrawResult.errorObj ? '<p style="text-indent: 2em">' + JSON.stringify(doDrawResult.errorObj) + '</p>' : '' }
-  `
+  const { doDrawResult, dipLuckyResult, isSuccess } = preResult;
+  let html = ''
+  if (isSuccess) {
+    const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
+    const dipLuckMsg = dipLuckyResult.data.has_dip ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
+    html = `
+      <h1 style="text-align: center">签到 + 粘福气</h1>
+      <p style="text-indent: 2em">签到执行结果：${signMsg}</p>
+      <p style="text-indent: 2em">粘福气执行结果：${dipLuckMsg}</p>
+      <p style="text-indent: 2em">当前积分：${preResult.score}</p>
+      <p style="text-indent: 2em">当前幸运值：${preResult.luckvalue}</p>
+    `
+  } else {
+    html = `
+      <h1 style="text-align: center">签到 + 粘福气 失败!!</h1>
+      <p style="text-indent: 2em">签到执行结果: 失败</p>
+      <p style="text-indent: 2em">失败原因: ${JSON.stringify(doDrawResult.errorObj)}</p>
+    `
+  }
   return sendMail({
     from: '掘金',
     to,
@@ -62,6 +70,7 @@ function isCheckIn() {
     method: 'GET',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
     const errorMsg = res.err_no !== 0 ? '签到失败！' : res.data ? '今日已经签到！' : ''
     return {
       status: !errorMsg,
@@ -83,6 +92,7 @@ function doCheckIn(isCheckInResult) {
     method: 'POST',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
     const errorMsg = res.err_no !== 0 ? '签到异常！' : ''
     return {
       isCheckInResult,
@@ -100,7 +110,10 @@ function queryCurrentPoint(preResult) {
     headers,
     method: 'GET',
     credentials: 'include'
-  }).then((res) => res.json()).then(res => ({...preResult, score: res.data}));
+  }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
+    return {...preResult, score: res.data}
+  });
 }
 
 // 查询当前是否有免费抽奖机会
@@ -110,6 +123,7 @@ function queryDrawChance(preResult) {
     method: 'GET',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
     const errorMsg = res.err_no !== 0 ? '已经签到！免费抽奖失败！' : res.data.free_count === 0 ? '签到成功！今日已经免费抽奖！' : '';
     return {
       ...preResult,
@@ -132,6 +146,7 @@ function doDraw(preResult) {
     method: 'POST',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
     const errorMsg = res.err_no !== 0 ? '已经签到！免费抽奖异常！' : ''
     return {
       ...preResult,
@@ -153,7 +168,10 @@ function dipLucky(preResult) {
     body: JSON.stringify({
       lottery_history_id: preResult.luckList[0]
     })
-  }).then((res) => res.json()).then(res => ({ ...preResult, dipLuckyResult: res }));
+  }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
+    return { ...preResult, dipLuckyResult: res }
+  });
 }
 // 查询我的福气值
 function queryMylucky(preResult) {
@@ -161,7 +179,10 @@ function queryMylucky(preResult) {
     headers,
     method: 'POST',
     credentials: 'include'
-  }).then((res) => res.json()).then(res => ({ ...preResult, luckvalue: res.data.total_value }))
+  }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
+    return { ...preResult, luckvalue: res.data.total_value, isSuccess: true }
+  })
 }
 // 查询可粘福气列表
 function queryLuckList(preResult) {
@@ -174,6 +195,7 @@ function queryLuckList(preResult) {
       page_size: 5
     })
   }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
     const lunks = res.data.lotteries.map(lottiem => lottiem.history_id)
     return {...preResult, luckList: lunks}
   })
@@ -194,6 +216,7 @@ compose([
 .catch(err => {
   console.log('执行异常', err)
   doSendMail({
+    isSuccess: false,
     doDrawResult: {
       errorMsg: '流水线执行异常',
       score: 0,
