@@ -26,6 +26,9 @@ const QUERY_CURRENT_POINT = 'https://api.juejin.cn/growth_api/v1/get_cur_point' 
 const QUERY_LUCK_LIST = 'https://api.juejin.cn/growth_api/v1/lottery_history/global_big' // 查询可粘福气列表
 const QUERY_MY_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/my_lucky' // 查询我的粘福气
 const DIP_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/dip_lucky' // 粘福气
+const NOT_COLLECT_LIST = 'https://api.juejin.cn/user_api/v1/bugfix/not_collect' // 未采集的bug列表
+const COLLECT_BUG = 'https://api.juejin.cn/user_api/v1/bugfix/collect' // 采集bug
+
 
 // compose 组合函数
 const compose = function (handles) {
@@ -47,6 +50,7 @@ function doSendMail(preResult) {
       <p style="text-indent: 2em">粘福气执行结果：${dipLuckMsg}</p>
       <p style="text-indent: 2em">当前积分：${preResult.score}</p>
       <p style="text-indent: 2em">当前幸运值：${preResult.luckvalue}</p>
+      <p style="text-indent: 2em">采集bug数：${preResult.bugs}</p>
     `
   } else {
     html = `
@@ -60,6 +64,35 @@ function doSendMail(preResult) {
     to,
     subject: '掘金定时签到',
     html
+  })
+}
+// 获取未采集的bug列表
+function queryBugList(preResult) {
+  return fetch(NOT_COLLECT_LIST, {
+    headers,
+    method: 'POST',
+    credentials: 'include'
+  }).then((res) => res.json()).then(res => {
+    if (!res.data) throw new Error(res)
+    return {...preResult, bugs: res.data}
+  })
+}
+// bug 采集
+function collectBug(preResult){
+  function generateAction(bug) {
+    return fetch(COLLECT_BUG, {
+      headers,
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({
+        bug_time: bug.bug_time,
+        bug_type: bug.bug_type
+      })
+    }).then((res) => res.json())
+  }
+  const actions = preResult.bugs.map(bug => generateAction(bug))
+  return Promise.all(actions).then(res => {
+    return {...preResult, bugs: res.length}
   })
 }
 
@@ -203,6 +236,8 @@ function queryLuckList(preResult) {
 
 compose([
   doSendMail,
+  collectBug,
+  queryBugList,
   queryMylucky,
   dipLucky,
   queryLuckList,
