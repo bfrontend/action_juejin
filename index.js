@@ -13,6 +13,7 @@ const headers = {
   'accept-language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
   'sec-ch-ua': '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
   'sec-ch-ua-mobile': '?0',
+  authority: 'api.juejin.cn',
   referer: 'https://juejin.cn/',
   accept: '*/*',
   cookie
@@ -71,7 +72,8 @@ function queryBugList(preResult) {
   return fetch(NOT_COLLECT_LIST, {
     headers,
     method: 'POST',
-    credentials: 'include'
+    credentials: 'include',
+    body: JSON.stringify({})
   }).then((res) => res.json()).then(res => {
     if (!res.data) throw new Error(res)
     return {...preResult, bugs: res.data}
@@ -103,7 +105,6 @@ function isCheckIn() {
     method: 'GET',
     credentials: 'include'
   }).then((res) => res.json()).then(res => {
-    if (!res.data) throw new Error(res)
     const errorMsg = res.err_no !== 0 ? '签到失败！' : res.data ? '今日已经签到！' : ''
     return {
       status: !errorMsg,
