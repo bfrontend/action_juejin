@@ -1,0 +1,26 @@
+
+
+name: Juejin_bug
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # 该时间为UTC时间，比北京时间晚8个小时，每天早上7点自动执行
+
+  workflow_dispatch:
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://npm.pkg.github.com/
+      - name: Run Project
+        env:
+          COOKIE: ${{ secrets.COOKIE }}
+          USER: ${{ secrets.USER }}
+          PASS: ${{ secrets.PASS }}
+          TO: ${{ secrets.TO }}
+        run: node dist/index.js "${COOKIE}" "${USER}" "${PASS}" "${TO}" "collectbug"

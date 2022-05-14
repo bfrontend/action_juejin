@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const sendMail = require('./sendMail');
 
-const [cookie, user, pass, to] = process.argv.slice(2);
+const [cookie, user, pass, to, isBug] = process.argv.slice(2);
 process.env.user = user;
 process.env.pass = pass;
 let score = 0;
@@ -40,9 +40,11 @@ const compose = function (handles) {
 
 // 发送邮件
 function doSendMail(preResult) {
-  const { doDrawResult, dipLuckyResult, isSuccess } = preResult;
+  const { doDrawResult, dipLuckyResult, isSuccess, isCollectBug } = preResult;
   let html = ''
-  if (isSuccess) {
+  if (isCollectBug) {
+    html =`<p>今日采集bug数：${preResult.bugs}</p>`
+  } else if (isSuccess) {
     const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
     const dipLuckMsg = dipLuckyResult.data.has_dip ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
     html = `
@@ -68,7 +70,7 @@ function doSendMail(preResult) {
   })
 }
 // 获取未采集的bug列表
-function queryBugList(preResult) {
+function queryBugList(preResult = {}) {
   return fetch(NOT_COLLECT_LIST, {
     headers,
     method: 'POST',
@@ -76,7 +78,7 @@ function queryBugList(preResult) {
     body: JSON.stringify({})
   }).then((res) => res.json()).then(res => {
     if (!res.data) throw new Error(res)
-    return {...preResult, bugs: res.data}
+    return {...preResult, bugs: res.data, isSuccess: true, isCollectBug: true}
   })
 }
 // bug 采集
@@ -235,7 +237,7 @@ function queryLuckList(preResult) {
   })
 }
 
-compose([
+let tasks = [
   doSendMail,
   collectBug,
   queryBugList,
@@ -247,7 +249,15 @@ compose([
   queryDrawChance,
   doCheckIn,
   isCheckIn
-])
+]
+if (isBug) {
+  tasks = [
+    doSendMail,
+    collectBug,
+    queryBugList,
+  ]
+}
+compose(tasks)
 .then(() => console.log('流水线执行成功'))
 .catch(err => {
   console.log('执行异常', err)
