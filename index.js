@@ -43,6 +43,7 @@ function doSendMail(preResult) {
   const { doDrawResult, dipLuckyResult, isSuccess, isCollectBug } = preResult;
   let html = ''
   if (isCollectBug) {
+    if (!preResult.bugs) return
     html =`<p>今日采集bug数：${preResult.bugs}</p>`
   } else if (isSuccess) {
     const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
