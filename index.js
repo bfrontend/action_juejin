@@ -78,7 +78,10 @@ function queryBugList(preResult = {}) {
     credentials: 'include',
     body: JSON.stringify({})
   }).then((res) => res.json()).then(res => {
-    if (!res.data) throw new Error(res)
+    if (!res.data) {
+      console.log('获取bug列表错误', res)
+      throw new Error(res)
+    }
     return {...preResult, bugs: res.data, isSuccess: true, isCollectBug: true}
   })
 }
@@ -93,7 +96,9 @@ function collectBug(preResult){
         bug_time: bug.bug_time,
         bug_type: bug.bug_type
       })
-    }).then((res) => res.json())
+    }).then((res) => res.json()).catch(e => {
+      console.log('采集bug错误', e)
+    })
   }
   const actions = preResult.bugs.map(bug => generateAction(bug))
   return Promise.all(actions).then(res => {
