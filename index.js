@@ -4,7 +4,6 @@ const sendMail = require('./sendMail');
 const [cookie, user, pass, to, isBug] = process.argv.slice(2);
 process.env.user = user;
 process.env.pass = pass;
-let score = 0;
 
 const headers = {
   'content-type': 'application/json; charset=utf-8',
@@ -98,6 +97,12 @@ function collectBug(preResult){
       })
     }).then((res) => res.json()).catch(e => {
       console.log('采集bug错误', e)
+    })
+  }
+  if (!preResult.bugs.length) {
+    return Promise.resolve({
+      ...preResult,
+      bugs: 0
     })
   }
   const actions = preResult.bugs.map(bug => generateAction(bug))
