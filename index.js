@@ -271,7 +271,7 @@ if (isBug) {
 compose(tasks)
 .then(() => console.log('流水线执行成功'))
 .catch(err => {
-  console.log('执行异常', err)
+  console.log('执行异常', JSON.stringify(err))
   doSendMail({
     isSuccess: false,
     doDrawResult: {
