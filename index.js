@@ -26,8 +26,8 @@ const QUERY_CURRENT_POINT = 'https://api.juejin.cn/growth_api/v1/get_cur_point' 
 const QUERY_LUCK_LIST = 'https://api.juejin.cn/growth_api/v1/lottery_history/global_big' // 查询可粘福气列表
 const QUERY_MY_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/my_lucky' // 查询我的粘福气
 const DIP_LUCK = 'https://api.juejin.cn/growth_api/v1/lottery_lucky/dip_lucky' // 粘福气
-const NOT_COLLECT_LIST = 'https://api.juejin.cn/user_api/v1/bugfix/not_collect' // 未采集的bug列表
-const COLLECT_BUG = 'https://api.juejin.cn/user_api/v1/bugfix/collect' // 采集bug
+// const NOT_COLLECT_LIST = 'https://api.juejin.cn/user_api/v1/bugfix/not_collect' // 未采集的bug列表
+// const COLLECT_BUG = 'https://api.juejin.cn/user_api/v1/bugfix/collect' // 采集bug
 
 
 // compose 组合函数
@@ -250,8 +250,8 @@ function queryLuckList(preResult) {
 
 let tasks = [
   doSendMail,
-  collectBug,
-  queryBugList,
+  // collectBug,
+  // queryBugList,
   queryMylucky,
   dipLucky,
   queryLuckList,
