@@ -39,29 +39,21 @@ const compose = function (handles) {
 
 // 发送邮件
 function doSendMail(preResult) {
-  const { doDrawResult, dipLuckyResult, isSuccess, isCollectBug } = preResult;
-  let html = ''
+  const { doDrawResult, isSuccess, isCollectBug } = preResult;
+  let html = "";
   if (isCollectBug) {
-    if (!preResult.bugs) return
-    html =`<p>今日采集bug数：${preResult.bugs}</p>`
-  } else if (isSuccess) {
-    const signMsg = doDrawResult.errorMsg || `签到成功！恭喜抽到：${doDrawResult.lottery_name}`
-    const dipLuckMsg = dipLuckyResult.data.has_dip ? '今日已经粘过福气' : `粘福气成功, 幸运值+ ${dipLuckyResult.data.dip_value}`
-    html = `
-      <h1 style="text-align: center">签到 + 粘福气</h1>
-      <p style="text-indent: 2em">签到执行结果：${signMsg}</p>
-      <p style="text-indent: 2em">粘福气执行结果：${dipLuckMsg}</p>
-      <p style="text-indent: 2em">当前积分：${preResult.score}</p>
-      <p style="text-indent: 2em">当前幸运值：${preResult.luckvalue}</p>
-      <p style="text-indent: 2em">采集bug数：${preResult.bugs}</p>
-    `
-  } else {
+    if (!preResult.bugs) return;
+    html = `<p>今日采集bug数：${preResult.bugs}</p>`;
+  } else if (!isSuccess) {
     html = `
       <h1 style="text-align: center">签到 + 粘福气 失败!!</h1>
       <p style="text-indent: 2em">签到执行结果: 失败</p>
-      <p style="text-indent: 2em">失败原因: ${JSON.stringify(doDrawResult.errorObj)}</p>
-    `
+      <p style="text-indent: 2em">失败原因: ${JSON.stringify(
+        doDrawResult.errorObj
+      )}</p>
+    `;
   }
+  if (!html) return Promise.resolve("");
   return sendMail({
     from: '掘金',
     to,
